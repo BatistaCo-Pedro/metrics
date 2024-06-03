@@ -12,7 +12,7 @@ using RabbitMQ.Client;
 
 namespace App3.WebApi.Repository
 {
-    public class RabbitRepository(
+    public class RabbitRepository (
         ILogger<RabbitRepository> logger,
         IConfiguration configuration)
         : IRabbitRepository

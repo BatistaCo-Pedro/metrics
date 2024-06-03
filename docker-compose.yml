@@ -51,6 +51,27 @@ services:
     environment:
       COLLECTOR_OTLP_ENABLED: true
 
+  app3:
+    build:
+      context: ./App3.WebApi
+    ports:
+      - "5001:8080"
+    networks:
+      - tracing
+    depends_on:
+      rabbitmq:
+        condition: service_completed_successfully
+      jaeger:
+        condition: service_completed_successfully
+      sqlserver:
+        condition: service_completed_successfully
+    environment:
+      Jaeger__Protocol: http
+      Jaeger__Port: 4317
+      Jaeger__Host: jaeger
+      RabbitMq__Host: rabbitmq
+      SqlDbConnString: server=sqlserver;user id=sa;password=Pass@Word1;
+
   app1:
     build:
       context: ./App1.WebApi
@@ -58,10 +79,13 @@ services:
       - "5000:8080"
     networks:
       - tracing
-    depends_on: 
-      - rabbitmq
-      - jaeger
-      - app3
+    depends_on:
+      app3:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_completed_successfully
+      jaeger:
+        condition: service_completed_successfully
     environment:
       Jaeger__Protocol: http
       Jaeger__Port: 4317
@@ -76,11 +100,13 @@ services:
       context: ./App2.RabbitConsumer.Console
     networks:
       - tracing
-    depends_on: 
-      - rabbitmq
-      - jaeger
-      - app3
-    entrypoint: ["./wait.bat", "30", "dotnet", "App2.RabbitConsumer.Console.dll"]
+    depends_on:
+      app3:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_completed_successfully
+      jaeger:
+        condition: service_completed_successfully
     environment:
       Jaeger__Protocol: http
       Jaeger__Port: 4317
@@ -88,37 +114,18 @@ services:
       RabbitMq__Host: rabbitmq
       App3UriEndpoint: http://app3:8080
 
-
-  app3:
-    build:
-      context: ./App3.WebApi
-    ports:
-      - "5001:8080"
-    networks:
-      - tracing
-    depends_on: 
-      - rabbitmq
-      - jaeger
-      - sqlserver
-    environment:
-      Jaeger__Protocol: http
-      Jaeger__Port: 4317
-      Jaeger__Host: jaeger
-      RabbitMq__Host: rabbitmq
-      SqlDbConnString: server=sqlserver;user id=sa;password=Pass@Word1;
-  
-
-
   app4:
     build:
       context: ./App4.RabbitConsumer.HostedService
     networks:
       - tracing
     depends_on: 
-      - rabbitmq
-      - jaeger
-      - redis
-    entrypoint: ["./wait.bat", "30", "dotnet", "App4.RabbitConsumer.HostedService.dll"]
+      rabbitmq:
+        condition: service_completed_successfully
+      jaeger:
+        condition: service_completed_successfully
+      redis:
+        condition: service_completed_successfully
     environment:
       Jaeger__Protocol: http
       Jaeger__Port: 4317
